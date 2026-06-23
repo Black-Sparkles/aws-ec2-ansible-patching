@@ -1,6 +1,6 @@
 # AWS EC2 Ansible Patching Project
 
-This project automates patching for Linux and Windows EC2 instances using Ansible.
+This project automates patching for Linux and Windows EC2 instances using Ansible and automating using GitHub Actions.
 
 ## Project Overview
 
