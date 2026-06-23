@@ -1,0 +1,6 @@
+*.pem
+*.key
+*.log
+reports/
+.env
+vault.yml
