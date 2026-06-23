@@ -12,7 +12,7 @@ The environment includes:
 - Jenkins pipeline for scheduled patching
 - Patch reports generated after execution
 
-## Tools Used
+## Tools Used:
 
 - AWS EC2
 - Ansible
