@@ -1,0 +1,8 @@
+Server: windows-ec2
+OS: Windows
+Patch Status: Completed
+Updates Installed: 0
+Reboot Required: False
+Service Checked: IIS W3SVC
+Health Check Status: 200
+Result: Success

@@ -1,0 +1,53 @@
+---
+- name: Patch Windows EC2 servers
+  hosts: windows_servers
+  serial: 1
+
+  tasks:
+    - name: Show server being patched
+      debug:
+        msg: "Starting Windows patching on {{ inventory_hostname }}"
+
+    - name: Install Windows critical and security updates
+      win_updates:
+        category_names:
+          - CriticalUpdates
+          - SecurityUpdates
+        reboot: yes
+      register: windows_update_result
+
+    - name: Wait for Windows server to reconnect
+      wait_for_connection:
+        timeout: 900
+
+    - name: Ensure IIS service is running
+      win_service:
+        name: W3SVC
+        state: started
+
+    - name: Test IIS website
+      win_uri:
+        url: http://localhost
+        status_code: 200
+      register: windows_health
+
+    - name: Create reports directory on control node
+      file:
+        path: reports
+        state: directory
+        mode: '0755'
+      delegate_to: localhost
+
+    - name: Save Windows patch report
+      copy:
+        dest: "/home/ec2-user/venterra-patching/reports/{{ inventory_hostname }}-windows-report.txt"
+        content: |
+          Server: {{ inventory_hostname }}
+          OS: Windows
+          Patch Status: Completed
+          Updates Installed: {{ windows_update_result.installed_update_count | default('N/A') }}
+          Reboot Required: {{ windows_update_result.reboot_required | default('N/A') }}
+          Service Checked: IIS W3SVC
+          Health Check Status: {{ windows_health.status_code }}
+          Result: Success
+      delegate_to: localhost

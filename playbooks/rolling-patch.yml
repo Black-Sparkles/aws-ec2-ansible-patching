@@ -1,0 +1,6 @@
+---
+- name: Rolling patch Linux servers
+  import_playbook: patch-linux.yml
+
+- name: Rolling patch Windows servers
+  import_playbook: patch-windows.yml

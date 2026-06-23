@@ -1,0 +1,53 @@
+---
+- name: Patch Linux EC2 servers
+  hosts: linux_servers
+  become: yes
+  serial: 1
+
+  tasks:
+    - name: Show server being patched
+      debug:
+        msg: "Starting Linux patching on {{ inventory_hostname }}"
+
+    - name: Update all Linux packages
+      yum:
+        name: "*"
+        state: latest
+
+    - name: Reboot Linux server
+      reboot:
+        reboot_timeout: 600
+
+    - name: Wait for server to come back online
+      wait_for_connection:
+        timeout: 300
+
+    - name: Ensure nginx is running
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Test local health endpoint
+      uri:
+        url: http://localhost/health
+        status_code: 200
+      register: linux_health
+    
+    - name: Create reports directory on control node
+      file:
+        path: reports
+        state: directory
+      delegate_to: localhost
+
+    - name: Save Linux patch report
+      copy:
+        dest: "reports/{{ inventory_hostname }}-linux-report.txt"
+        content: |
+          Server: {{ inventory_hostname }}
+          OS: Linux
+          Patch Status: Completed
+          Service Checked: nginx
+          Health Check Status: {{ linux_health.status }}
+          Result: Success
+      delegate_to: localhost

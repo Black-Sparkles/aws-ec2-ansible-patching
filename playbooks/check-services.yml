@@ -1,0 +1,19 @@
+---
+- name: Check Linux Service
+  hosts: linux_servers
+  become: yes
+
+  tasks:
+    - name: Verify nginx
+      service:
+        name: nginx
+        state: started
+
+- name: Check Windows Service
+  hosts: windows_servers
+
+  tasks:
+    - name: Verify IIS
+      win_service:
+        name: W3SVC
+        state: started

@@ -1,0 +1,6 @@
+Server: linux-ec2
+OS: Linux
+Patch Status: Completed
+Service Checked: nginx
+Health Check Status: 200
+Result: Success
