@@ -4,14 +4,13 @@ on:
   push:
     branches:
       - master
-    paths:
-      - "app/property-api/**"
+
+  workflow_dispatch:
 
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: property-api
   CONTAINER_NAME: property-api
-  APP_PORT: 5000
 
 jobs:
   build-and-deploy:
@@ -31,29 +30,32 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build, tag, and push Docker image
+      - name: Build, tag, and push Docker image to ECR
         run: |
-          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-          IMAGE_URI=$ACCOUNT_ID.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:latest
+          IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:latest
 
           docker build -t $IMAGE_URI app/property-api
           docker push $IMAGE_URI
 
           echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
 
-      - name: Deploy to Linux EC2
+      - name: Deploy latest image to Linux EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.LINUX_EC2_HOST }}
           username: ec2-user
           key: ${{ secrets.LINUX_EC2_KEY }}
           script: |
+            echo "Logging in to ECR..."
             aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
 
+            echo "Pulling latest Docker image..."
             docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/property-api:latest
 
+            echo "Stopping old container if it exists..."
             docker rm -f property-api || true
 
+            echo "Starting new container..."
             docker run -d \
               --name property-api \
               --restart unless-stopped \
@@ -62,16 +64,18 @@ jobs:
 
             echo "Waiting for container to become healthy..."
 
-            for i in {1..10}; do
+            for i in 1 2 3 4 5 6 7 8 9 10; do
               if curl -f http://localhost:5000/health; then
                 echo "Application is healthy"
                 exit 0
               fi
-            
+
               echo "Health check failed. Retrying in 5 seconds..."
+              docker ps
+              docker logs property-api || true
               sleep 5
             done
-            
+
             echo "Application failed health check"
             docker logs property-api
             exit 1
