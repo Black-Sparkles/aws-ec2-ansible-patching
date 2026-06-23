@@ -3,7 +3,7 @@ name: Build and Deploy Property API
 on:
   push:
     branches:
-      - main
+      - master
     paths:
       - "app/property-api/**"
 
