@@ -59,6 +59,10 @@ jobs:
             docker run -d \
               --name property-api \
               --restart unless-stopped \
+              --log-driver=awslogs \
+              --log-opt awslogs-region=us-east-1 \
+              --log-opt awslogs-group=/venterra/property-api \
+              --log-opt awslogs-stream= property-api \
               -p 5000:5000 \
               ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/property-api:latest
 
